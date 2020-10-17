@@ -38,7 +38,7 @@ class KeyGen:
             self.keys.append((sk, pk))
 
     def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], G1Element]:
-        return lambda text: G1.hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else G1.hash_to_point(hash_function.update(text.encode()).digest())
+        return lambda text: G1.hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else G1.hash_to_point(hash_function(text.encode()).digest())
 
     @staticmethod
     def test():
@@ -50,7 +50,8 @@ class KeyGen:
         print("test passed")
 
     def __str__(self):
-        return "\n".join([f"keys (s{i},p{i})=({self.keys[i][0]},{self.keys[i][1]})" for i, key in enumerate(self.keys)])
+        return f"g1: {self.g1.get_affine_coordinates()}\n" +\
+               "\n".join([f"keys (s{i},p{i})=({self.keys[i][0]},{self.keys[i][1]})" for i, key in enumerate(self.keys)])
 
 
 if __name__ == '__main__':
