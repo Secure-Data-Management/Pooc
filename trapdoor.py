@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 # Irene
+from petrelic.bn import Bn
 from petrelic.multiplicative.pairing import GT, G1, G2
 from genkey import KeyGen
 
@@ -23,14 +24,14 @@ def generate_trapdoor(skj, Q, m, params):
     Tjq1 = g ** t
 
     # Tjq2 = (hI1... hIm)**t where hIj = h1(wIj)
-    Tjq2 = 1
+    Tjq2 = G1.neutral_element()
     for element in liste_w:
         Tjq2 = Tjq2 * (params['H1'](element) ** t)
 
     # Tjq3 = (fI1... fIm)**(t / xj) where fIj = h2(wIj) ; xj computed in KeyGen
-    Tjq3 = 1
+    Tjq3 = G1.neutral_element()
     for element in liste_w:
-        Tjq3 = Tjq3 * (params['H2'](element) ** (t/skj))
+        Tjq3 = Tjq3 * (params['H2'](element) ** (t.int_div(skj)))
 
     Tjq = [Tjq1, Tjq2, Tjq3] + liste_I
     return Tjq
