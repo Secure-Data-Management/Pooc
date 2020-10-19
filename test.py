@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from petrelic.bn import Bn
 from petrelic.multiplicative.pairing import G1, G2, GT, G1Element, G2Element
 from genkey import KeyGen
 from mpeck import  mPECK
@@ -8,13 +9,15 @@ import trapdoor as trapdoor
 
 
 def Test(pk, S, T, j):
+    #  S = [A, B, C]
+
     A = S[0] # g^r
-    B = S[1:n+1] # pk^s
-    C = S[n+1:] # l total crypted keywords (h^r)(f^s)
+    B = S[1] # pk^s
+    C = S[2] # l total crypted keywords (h^r)(f^s)
     I = T[3:] # m indexes of keywords from the query
 
     #Intermediate computation
-    keywords_product = 1
+    keywords_product:G1Element = G1.neutral_element()
     for i in I:
         keywords_product *= C[i]
 
@@ -39,13 +42,13 @@ if __name__ == "__main__":
     params = {"G1":G1, "G2":G2, "e":k.e, "H1":k.h1, "H2":k.h2, "g":k.g1}
     pk_list = [key[1] for key in k.keys]
     sk_list = [key[0] for key in k.keys]
-    S = mPECK(pk_list, ["test", "encryption"], params, message='This is the message')[1:]
+    S = mPECK(pk_list, ["test", "encryption"], params, message='This is the message')[1]
 
     #trapdoor generation (query from user j)
-    # T = trapdoor.generate_trapdoor(sk_list[0], [1,"encryption"], 1, params)
-        
+    T = trapdoor.generate_trapdoor(sk_list[0], [1,"encryption"], 1, params)
+
     #Test
-    #Test(pk_list, S, T, j)
+    print(Test(pk_list, S, T, 1))
 
 
 
