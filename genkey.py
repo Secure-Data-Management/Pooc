@@ -14,6 +14,8 @@ import hashlib
 
 from crypto.bn256 import *
 
+from pypbc import *
+
 
 class KeyGen:
     """ we are using RELIC as the underlying curve gen ( BLS-381 ) we will implement full parameter through charm like later
@@ -21,30 +23,55 @@ class KeyGen:
 
     def __init__(self, n: int):
         # those are the hash function which hash to a G1Element using sha3 256 and 512
-        self.h1: Callable[[Union[bytes, bytearray, str]], CurvePoint] = self.get_hash_function(hashlib.sha3_256)
-        self.h2: Callable[[Union[bytes, bytearray, str]], CurvePoint] = self.get_hash_function(hashlib.sha3_512)
+
         # this is the element e (not sure tho)
-        self.e: Callable[[CurveTwist, CurvePoint], gfp_12] = lambda e1, e2: optimal_ate(e1, e2)
-        self.pub_keys: List[CurvePoint] = []
-        self.keys: List[Tuple[int, CurvePoint]] = []
-        self.priv_keys: List[int] = []
-        self.g:CurvePoint = curve_G
+        self.params: Parameters = Parameters(qbits=512, rbits=160)
+        self.pairing: Pairing = Pairing(self.params)
+        self.h1: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_256)
+        self.h2: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_512)
+        self.e: Callable[[Element, Element], Element] = lambda e1, e2: self.pairing.apply(e1, e2)
+        self.pub_keys: List[Element] = []
+        self.keys: List[Tuple[Element, Element]] = []
+        self.priv_keys: List[Element] = []
+        self.g = Element.random(self.pairing, G2)
         for _ in range(n):
-            sk = rand_elem()
-            pk = self.g.scalar_mul(sk)
+            sk:Element = Element.random(self.pairing, Zr)
+            pk:Element = Element(self.pairing, G2, value=self.g ** sk)
             self.keys.append((sk, pk))
             self.pub_keys.append(pk)
             self.priv_keys.append(sk)
-            print(pk,type(pk))
-    def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], CurvePoint]:
-        return lambda text: g1_hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else g1_hash_to_point(hash_function(text.encode()).digest())
+
+    def get_hash_function(self, pairing, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], Element]:
+        return lambda text: Element.from_hash(pairing, G1, hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else Element.from_hash(pairing, G1,
+                                                                                                                                                        hash_function(text.encode()).digest())
 
     @staticmethod
     def test():
-        priv, pub = g2_random()
-        m = b"Some message"
-        signature = g1_hash_to_point(m).scalar_mul(priv)
-        assert optimal_ate(pub, g1_hash_to_point(m)) == optimal_ate(twist_G, signature)
+        # this is a test for the BLS short signature system
+        params = Parameters(qbits=512, rbits=160)
+        pairing = Pairing(params)
+
+        # build the common parameter g
+        g = Element.random(pairing, G2)
+
+        # build the public and private keys
+        private_key = Element.random(pairing, Zr)
+        public_key = Element(pairing, G2, value=g ** private_key)
+
+        # set the magic hash value
+        hash_value = Element.from_hash(pairing, G1, "hashofmessage")
+
+        # create the signature
+        signature = hash_value ** private_key
+
+        # fill temp2
+        temp2 = pairing.apply(hash_value, public_key)
+
+        # and again...
+        temp1 = pairing.apply(signature, g)
+
+        # compare
+        assert (temp1 == temp2)
         print("test passed")
 
     def __str__(self):
