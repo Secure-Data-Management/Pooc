@@ -23,10 +23,10 @@ class KeyGen:
     def __init__(self, n: int):
 
         # those are the hash function which hash to a G1Element using sha3 256 and 512
-        self.h1: Callable[[Union[bytes, bytearray, str]], G1Element] = self.get_hash_function(hashlib.sha3_256)
-        self.h2: Callable[[Union[bytes, bytearray, str]], G1Element] = self.get_hash_function(hashlib.sha3_512)
+        self.h1: Callable[[Union[bytes, bytearray, str]], curve_point] = self.get_hash_function(hashlib.sha3_256)
+        self.h2: Callable[[Union[bytes, bytearray, str]], curve_point] = self.get_hash_function(hashlib.sha3_512)
         # this is the element e (not sure tho)
-        self.e: Callable[[G1Element, G2Element], GTElement] = lambda e1, e2: e1.pair(e2)
+        self.e: Callable[[curve_point, curve_point], GTElement] = lambda e1, e2: e1.pair(e2)
         self.g: G1Element = G1.order().random()
         self.keys: List[Tuple[G1, Bn]] = []
         for _ in range(n):
@@ -41,8 +41,8 @@ class KeyGen:
     def test():
         priv, pub = g2_random()
         m = b"Some message"
-        signature = g1_hash_to_point(m) ** priv
-        assert signature.pair(G2.generator()) == G1.hash_to_point(m).pair(pk)
+        signature = g1_compress(g1_hash_to_point(m).scalar_mul(priv))
+        assert signature.pair(.generator()) == G1.hash_to_point(m).pair(pk)
         print("test passed")
 
     def __str__(self):

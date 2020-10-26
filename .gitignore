@@ -4,3 +4,7 @@
 crypto/__pycache__/
 
 __pycache__/
+
+*.csv
+
+.vs/
