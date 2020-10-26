@@ -15,15 +15,17 @@ def bls_keygen():
 def bls_sign(privkey, msg):
     pt = bn256.g1_hash_to_point(msg)
     assert pt.is_on_curve()
-
-    return bn256.g1_compress(pt.scalar_mul(privkey))
+    sig=pt.scalar_mul(privkey)
+    print(sig,type(sig))
+    print(bn256.g1_compress(sig),type(bn256.g1_compress(sig)))
+    return bn256.g1_compress(sig)
 
 
 def bls_verify(pubkey, msg, csig):
     sig = bn256.g1_uncompress(csig)
 
-    assert type(pubkey) == bn256.curve_twist
-    assert type(sig) == bn256.curve_point
+    assert type(pubkey) == bn256.CurveTwist
+    assert type(sig) == bn256.CurvePoint
 
     msg_pt = bn256.g1_hash_to_point(msg)
 

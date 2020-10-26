@@ -345,7 +345,7 @@ def point_scalar_mul(pt, k):
 curve_B = gfp_1(3)
 
 
-class curve_point(object):
+class CurvePoint(object):
     def __init__(self, x, y, z=gfp_1(1)):
         assert type(x) in [gfp_1]
         assert type(y) in [gfp_1]
@@ -385,7 +385,7 @@ class curve_point(object):
 
 
 # Any point (1,y) where y is a square root of b+1 is a generator
-curve_G = curve_point(gfp_1(1), gfp_1(p - 2))
+curve_G = CurvePoint(gfp_1(1), gfp_1(p - 2))
 
 assert curve_G.is_on_curve()
 
@@ -520,7 +520,7 @@ xi2 = [(x * x.conjugate_of()) for x in xi1]
 twist_B = xi.inverse().mul(gfp_2(0, curve_B.value()))
 
 
-class curve_twist(object):
+class CurveTwist(object):
     def __init__(self, x, y, z):
         assert type(x) == gfp_2 and type(y) == gfp_2 and type(z) == gfp_2
         self.x = x
@@ -561,7 +561,7 @@ class curve_twist(object):
 
 
 # TODO derive this
-twist_G = curve_twist(
+twist_G = CurveTwist(
     gfp_2(21167961636542580255011770066570541300993051739349375019639421053990175267184,
           64746500191241794695844075326670126197795977525365406531717464316923369116492),
     gfp_2(20666913350058776956210519119118544732556678129809273996262322366050359951122,
@@ -848,9 +848,9 @@ class gfp_12(object):
 
 
 def line_func_add(r, p, q, r2):
-    assert type(r) == curve_twist
-    assert type(p) == curve_twist
-    assert type(q) == curve_point
+    assert type(r) == CurveTwist
+    assert type(p) == CurveTwist
+    assert type(q) == CurvePoint
     assert type(r2) == gfp_2
 
     r_t = r.z.square()
@@ -887,7 +887,7 @@ def line_func_add(r, p, q, r2):
     t2 = t2.double()
     r_y = t - t2
 
-    r_out = curve_twist(r_x, r_y, r_z)
+    r_out = CurveTwist(r_x, r_y, r_z)
 
     t = p.y + r_z
     t = t.square()
@@ -907,8 +907,8 @@ def line_func_add(r, p, q, r2):
 
 
 def line_func_double(r, q):
-    assert type(r) == curve_twist
-    assert type(q) == curve_point
+    assert type(r) == CurveTwist
+    assert type(q) == CurvePoint
 
     # cache this?
     r_t = r.z.square()
@@ -936,7 +936,7 @@ def line_func_double(r, q):
 
     assert r_z == r.y * r.z.double()
 
-    r_out = curve_twist(r_x, r_y, r_z)
+    r_out = CurveTwist(r_x, r_y, r_z)
     # assert r_out.is_on_curve()
 
     a = r.x + E
@@ -978,8 +978,8 @@ def mul_line(r, a, b, c):
 def miller(q, p):
     import copy
 
-    assert type(q) == curve_twist
-    assert type(p) == curve_point
+    assert type(q) == CurveTwist
+    assert type(p) == CurvePoint
 
     Q = copy.deepcopy(q)
     Q.force_affine()
@@ -1010,13 +1010,13 @@ def miller(q, p):
             mul_line(f, a, b, c)
 
     # Q1 = pi(Q)
-    Q1 = curve_twist(
+    Q1 = CurveTwist(
         Q.x.conjugate_of().mul(xi1[1]),
         Q.y.conjugate_of().mul(xi1[2]),
         gfp_2_one)
 
     # Q2 = pi2(Q)
-    Q2 = curve_twist(
+    Q2 = CurveTwist(
         Q.x.mul_scalar(xi2[1].y),
         Q.y,
         gfp_2_one)
@@ -1090,8 +1090,8 @@ def final_exp(inp):
 
 
 def optimal_ate(a, b):
-    assert type(a) == curve_twist
-    assert type(b) == curve_point
+    assert type(a) == CurveTwist
+    assert type(b) == CurvePoint
 
     e = miller(a, b)
     ret = final_exp(e)
@@ -1112,8 +1112,8 @@ def g1_random():
 
 
 def g1_add(a, b):
-    assert type(a) == curve_point
-    assert type(b) == curve_point
+    assert type(a) == CurvePoint
+    assert type(b) == CurvePoint
 
     return a.add(b)
 
@@ -1124,7 +1124,7 @@ def g1_marshall(a):
 
 
 def g1_unmarshall(x, y):
-    return curve_point(x, y)
+    return CurvePoint(x, y)
 
 
 def g1_hash_to_point(msg):
@@ -1158,24 +1158,24 @@ def g1_hash_to_point(msg):
     g_x1 = g(x1)
     if legendre(g_x1) == 1:
         x1_sqrt = sqrt_mod_p(g_x1)
-        return curve_point(gfp_1(x1),
-                           gfp_1(chi_t * x1_sqrt))
+        return CurvePoint(gfp_1(x1),
+                          gfp_1(chi_t * x1_sqrt))
 
     x2 = (-1 - x1) % p
     g_x2 = g(x2)
 
     if legendre(g_x2) == 1:
         x2_sqrt = sqrt_mod_p(g_x2)
-        return curve_point(gfp_1(x2),
-                           gfp_1(chi_t * x2_sqrt))
+        return CurvePoint(gfp_1(x2),
+                          gfp_1(chi_t * x2_sqrt))
 
     x3 = 1 + inv_mod_p(w * w)
     g_x3 = g(x3)
 
     assert legendre(g_x3) == 1
     x3_sqrt = sqrt_mod_p(g_x3)
-    return curve_point(gfp_1(x3),
-                       gfp_1(chi_t * x3_sqrt))
+    return CurvePoint(gfp_1(x3),
+                      gfp_1(chi_t * x3_sqrt))
 
 
 def g1_compress(g1):
@@ -1200,7 +1200,7 @@ def g1_uncompress(g):
     if y_sign != y & 1:
         y = p - y
 
-    return curve_point(gfp_1(x), gfp_1(y))
+    return CurvePoint(gfp_1(x), gfp_1(y))
 
 
 def g2_scalar_base_mult(k):
@@ -1224,9 +1224,9 @@ def g2_marshall(a):
 def g2_unmarshall(w, x, y, z):
     if w == x == y == z == 0:
         # This is the point at infinity.
-        return curve_twist(gfp_2(0, 0), gfp_2(0, 1), gfp_2(0, 0))
+        return CurveTwist(gfp_2(0, 0), gfp_2(0, 1), gfp_2(0, 0))
     else:
-        return curve_twist(gfp_2(w, x), gfp_2(y, z), gfp_2(0, 1))
+        return CurveTwist(gfp_2(w, x), gfp_2(y, z), gfp_2(0, 1))
 
 
 def gt_scalar_mult(x, k):

@@ -1,23 +1,23 @@
 #!/usr/bin/python3
-from petrelic.multiplicative.pairing import G1, G2, GT, G1Element, G2Element
+from crypto.bn256 import *
 from genkey import KeyGen
 # Antoine
 import hashlib
 
 
-def hash_G2_to_M(g, length=64):
+def hash_G2_to_M(g:str, length=64) -> bytes:
     """Takes an element of G2, and hashes it to a bytes object"""
-    g_bytes = g.to_binary()
-    g_hash = hashlib.sha3_512(g_bytes).digest()
-    result = g_hash
-    #TODO: find a way to generate a hash of length equal to the given length
+    g_bytes:bytes = g.encode()
+    g_hash:bytes = hashlib.sha3_512(g_bytes).digest()
+    result:bytes = g_hash
+    # TODO: find a way to generate a hash of length equal to the given length
     while len(result) < length:
         result += g_hash
-    result = result[:length]
+    result:bytes = result[:length]
     return result
 
 
-def mPECK(pk_list, W, params, message=""):
+def mPECK(pk_list, W, genkey: KeyGen, message=""):
     """
     multi Public key Encryption with Conjuctive Keyword. Encrypts both message and keywords !
     Performs the encryption of the keywords and of the message, using the mPECK model. Encrypts the keywords in W using the public keys in pk_list
@@ -29,71 +29,74 @@ def mPECK(pk_list, W, params, message=""):
         [E, A, B, C] as in the paper, E=b"" if there was no message
             [A, B, C] with A=g^r, B=[B1, ..., Bn] and C=[C1, ..., Cl]
     """
-    #TODO: to remove if hashes accept strings
+    # TODO: to remove if hashes accept strings
     # convert keywords to bytes:
     # for i, kw in enumerate(W):
-        # if isinstance(kw, str):
-        #     kw_bytes = kw.encode("utf-8")
-        #     W[i] = kw_bytes
+    # if isinstance(kw, str):
+    #     kw_bytes = kw.encode("utf-8")
+    #     W[i] = kw_bytes
 
     # selects two random values in Zp*
-    s = GT.order().random()
-    r = GT.order().random()
+    s: int = rand_elem()
+    r: int = rand_elem()
     # computes the A=g^r
-    A = params["g"] ** r
+    A = g1_scalar_base_mult(r)
     # computes B = pk**s for each public key
     n = len(pk_list)
-    B = [0 for i in range(n)]
+    B = []
     for j in range(n):
-        yj = pk_list[j]
-        B[j] = yj ** s
+        yj: CurvePoint = genkey.pub_keys[j]
+        B.append(yj.scalar_mul(s))
     # computes C = (h^r)(f^s) for each keyword
     l = len(W)
-    C = [0 for i in range(l)]
+    C = []
     for i, kw in enumerate(W):
-        h = params["H1"](kw)
-        f = params["H2"](kw)
-        C[i] = h**r * f**s
+        h = genkey.h1(kw)
+        f = genkey.h2(kw)
+        # ** -> * ; * -> +
+        temp1: CurvePoint = h.scalar_mul(r)
+        temp2: CurvePoint = f.scalar_mul(s)
+        C.append(temp1.add(temp2))
 
-    #encode the message
+    # encode the message
     E = b""
+    xor = lambda part1, part2: bytearray([e1 ^ e2 for (e1, e2) in zip(part1, part2)])
     if len(message) > 0:
-        #TODO: to remove if hashes accept strings
+        # TODO: to remove if hashes accept strings
         # if not isinstance(message, bytes):
         #     message = message.encode("utf-8")
-        E = hash_G2_to_M(params["e"](params["g"], params["g"]) ** (r*s)) ^ message
+        e_g_g:gfp_12=genkey.e(twist_G, genkey.g)
+        e_r_s=r * s
+        e_g_g1:gfp_12=e_g_g.exp(e_r_s)
+        e_g_g2:bytes=hash_G2_to_M(e_g_g1.__repr__())
+        E = xor(e_g_g2, message.encode())
         print(E)
-    #FIXME: e n'est pas de la bonne forme, elle ne peut pas prendre (g,g) comme argument donc impossible de faire le chiffrement du message
+    # FIXME: e n'est pas de la bonne forme, elle ne peut pas prendre (g,g) comme argument donc impossible de faire le chiffrement du message
 
     return [E, A, B, C]
 
 
-
-def mDEC(xj, E, Bj, A):
+def mDEC(xj, E, Bj, A, k):
     """Decrypts the cipher E, using private key xj, Bj and A"""
-    Xj = hash_G2_to_M(params["e"](A, Bj)**(1/xj))
-    m = E ^Xj
+    Xj = hash_G2_to_M(k.e(A, Bj) ** (1 / xj))
+    m = E ^ Xj
     m = m.decode()
     return m
-
 
 
 if __name__ == "__main__":
     # number of participants
     n = 3
     k = KeyGen(n)
-    params = {"G1":G1, "G2":G2, "e":k.e, "H1":k.h1, "H2":k.h2, "g":k.g1}
-    pk_list = [key[1] for key in k.keys]
-    sk_list = [key[0] for key in k.keys]
-    #encryption of the message
+    # encryption of the message
     message = "This is the message"
     keywords = ["test", "encryption"]
     # there are 3 clients, only allow 0 and 1 to search and decrypt
     recipients = [0, 1]
-    recipients_pk = [pk_list[r] for r in recipients]
-    E, A, B, C = mPECK(recipients_pk, keywords, params, message=message)
+    recipients_pk = [k.pub_keys[r] for r in recipients]
+    E, A, B, C = mPECK(recipients_pk, keywords, k, message=message)
     print(f"Message \"{message}\" encrypted, only recipients {recipients} are allowed to decrypt")
     # decrypt as 0
     for i in range(n):
-        m = mDEC(sk_list[i], E, B[i], A)
+        m = mDEC(k.priv_keys[i], E, B[i], A, k)
         print(f"Client {i}: decryption is: {m}")

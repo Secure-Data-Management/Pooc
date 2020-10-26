@@ -10,7 +10,6 @@
 
 from typing import Union, Tuple, List, Callable, Any
 
-
 import hashlib
 
 from crypto.bn256 import *
@@ -21,33 +20,35 @@ class KeyGen:
      when the dependency hell has been fixed read more here: https://petrelic.readthedocs.io/en/latest/petrelic.native.html """
 
     def __init__(self, n: int):
-
         # those are the hash function which hash to a G1Element using sha3 256 and 512
-        self.h1: Callable[[Union[bytes, bytearray, str]], curve_point] = self.get_hash_function(hashlib.sha3_256)
-        self.h2: Callable[[Union[bytes, bytearray, str]], curve_point] = self.get_hash_function(hashlib.sha3_512)
+        self.h1: Callable[[Union[bytes, bytearray, str]], CurvePoint] = self.get_hash_function(hashlib.sha3_256)
+        self.h2: Callable[[Union[bytes, bytearray, str]], CurvePoint] = self.get_hash_function(hashlib.sha3_512)
         # this is the element e (not sure tho)
-        self.e: Callable[[curve_point, curve_point], GTElement] = lambda e1, e2: e1.pair(e2)
-        self.g: G1Element = G1.order().random()
-        self.keys: List[Tuple[G1, Bn]] = []
+        self.e: Callable[[CurveTwist, CurvePoint], gfp_12] = lambda e1, e2: optimal_ate(e1, e2)
+        self.pub_keys: List[CurvePoint] = []
+        self.keys: List[Tuple[int, CurvePoint]] = []
+        self.priv_keys: List[int] = []
+        self.g:CurvePoint = curve_G
         for _ in range(n):
-            sk = GT.order().random()  # hoping this is the actual field Zp, seems weird tbh
-            pk = G1.generator() ** sk
+            sk = rand_elem()
+            pk = self.g.scalar_mul(sk)
             self.keys.append((sk, pk))
-
-    def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], curve_point]:
+            self.pub_keys.append(pk)
+            self.priv_keys.append(sk)
+            print(pk,type(pk))
+    def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], CurvePoint]:
         return lambda text: g1_hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else g1_hash_to_point(hash_function(text.encode()).digest())
 
     @staticmethod
     def test():
         priv, pub = g2_random()
         m = b"Some message"
-        signature = g1_compress(g1_hash_to_point(m).scalar_mul(priv))
-        assert signature.pair(.generator()) == G1.hash_to_point(m).pair(pk)
+        signature = g1_hash_to_point(m).scalar_mul(priv)
+        assert optimal_ate(pub, g1_hash_to_point(m)) == optimal_ate(twist_G, signature)
         print("test passed")
 
     def __str__(self):
-        return f"g1: {self.g1.get_affine_coordinates()}\n" +\
-               "\n".join([f"keys (s{i},p{i})=({self.keys[i][0]},{self.keys[i][1]})" for i, key in enumerate(self.keys)])
+        return f"\n".join([f"keys (s{i},p{i})=({self.keys[i][0]},{self.keys[i][1]})" for i, key in enumerate(self.keys)])
 
 
 if __name__ == '__main__':
