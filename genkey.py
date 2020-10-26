@@ -10,10 +10,10 @@
 
 from typing import Union, Tuple, List, Callable, Any
 
-from petrelic.bn import Bn
-# we are using multiplicative so we use  multiplicative for GT,G1 and G2
-from petrelic.multiplicative.pairing import G1, G2, GT, G1Element, G2Element
+
 import hashlib
+
+from crypto.bn256 import *
 
 
 class KeyGen:
@@ -21,31 +21,27 @@ class KeyGen:
      when the dependency hell has been fixed read more here: https://petrelic.readthedocs.io/en/latest/petrelic.native.html """
 
     def __init__(self, n: int):
-        # those are the generators we will not use them
-        self.g1: G1Element = G1.generator()
-        self.g2: G2Element = G2.generator()
 
         # those are the hash function which hash to a G1Element using sha3 256 and 512
         self.h1: Callable[[Union[bytes, bytearray, str]], G1Element] = self.get_hash_function(hashlib.sha3_256)
         self.h2: Callable[[Union[bytes, bytearray, str]], G1Element] = self.get_hash_function(hashlib.sha3_512)
         # this is the element e (not sure tho)
-        self.e: Callable[[G1Element, G1Element], G2Element] = lambda e1, e2: e1.pair(e2)
+        self.e: Callable[[G1Element, G2Element], GTElement] = lambda e1, e2: e1.pair(e2)
         self.g: G1Element = G1.order().random()
-        self.keys: List[Tuple[Bn, Bn]] = []
+        self.keys: List[Tuple[G1, Bn]] = []
         for _ in range(n):
             sk = GT.order().random()  # hoping this is the actual field Zp, seems weird tbh
             pk = G1.generator() ** sk
             self.keys.append((sk, pk))
 
-    def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], G1Element]:
-        return lambda text: G1.hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else G1.hash_to_point(hash_function(text.encode()).digest())
+    def get_hash_function(self, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], curve_point]:
+        return lambda text: g1_hash_to_point(hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else g1_hash_to_point(hash_function(text.encode()).digest())
 
     @staticmethod
     def test():
-        sk = G1.order().random()
-        pk = G2.generator() ** sk
+        priv, pub = g2_random()
         m = b"Some message"
-        signature = G1.hash_to_point(m) ** sk
+        signature = g1_hash_to_point(m) ** priv
         assert signature.pair(G2.generator()) == G1.hash_to_point(m).pair(pk)
         print("test passed")
 

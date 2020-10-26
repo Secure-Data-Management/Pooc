@@ -40,4 +40,4 @@ def generate_trapdoor(skj, Q, m, params):
 if __name__ == "__main__":
     k = KeyGen(3)
     params = {"G1":G1, "G2":G2, "e":k.e, "H1":k.h1, "H2":k.h2, "g":k.g1}
-    # TODO => Tjq = generate_trapdoor()
+    Tjq = generate_trapdoor()
