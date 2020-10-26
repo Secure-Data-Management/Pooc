@@ -21,7 +21,7 @@ def hash_G2_to_M(g: str, length=64) -> bytes:
     return result
 
 
-def mpeck(pk_list:List[CurvePoint], W:List[str], genkey: KeyGen, message:str="")-> Tuple[CurvePoint, bytearray, List[CurvePoint], List[CurvePoint]]:
+def mpeck(pk_list:List[CurvePoint], W:List[str], genkey: KeyGen, message:str="")-> Tuple[bytearray,CurvePoint, List[CurvePoint], List[CurvePoint]]:
     """
     multi Public key Encryption with Conjuctive Keyword. Encrypts both message and keywords !
     Performs the encryption of the keywords and of the message, using the mPECK model. Encrypts the keywords in W using the public keys in pk_list
@@ -78,9 +78,10 @@ def mpeck(pk_list:List[CurvePoint], W:List[str], genkey: KeyGen, message:str="")
     return E, A, B, C
 
 
-def mDEC(xj: int, E: bytearray, Bj:CurvePoint, A:CurvePoint, k:KeyGen):
+def mdec(xj: int, E: bytearray, Bj:CurvePoint, A:CurvePoint, k:KeyGen):
     """Decrypts the cipher E, using private key xj, Bj and A"""
-    e_A_Bj: gfp_12 = k.e(CurveTwist(A.x,A.y,A.z), Bj)
+    print(A.x,A.y,A.z)
+    e_A_Bj: gfp_12 = k.e(A,Bj)
     Xj = hash_G2_to_M(e_A_Bj.mul_scalar(1 / xj))
     m = xor(E, Xj)
     m = m.decode()
@@ -101,5 +102,5 @@ if __name__ == "__main__":
     print(f"Message \"{message}\" encrypted, only recipients {recipients} are allowed to decrypt")
     # decrypt as 0
     for i in range(n):
-        m = mDEC(k.priv_keys[i], E, B[i], A, k)
+        m = mdec(k.priv_keys[i], E, B[i], A, k)
         print(f"Client {i}: decryption is: {m}")

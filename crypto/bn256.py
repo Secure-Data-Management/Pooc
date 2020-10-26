@@ -42,7 +42,6 @@ p = (((u + 1) * 6 * u + 4) * u + 1) * 6 * u + 1
 order = p - 6 * u * u
 
 
-
 def is_integer_type(x):
     return type(x) in [int]
 
@@ -177,7 +176,6 @@ class gfp_1(object):
 
     def square(self):
         return self * self
-        return gfp_1(self.v * self.v)
 
     def negative_of(self):
         return self.additive_inverse()
@@ -525,7 +523,7 @@ twist_B = xi.inverse().mul(gfp_2(0, curve_B.value()))
 
 class CurveTwist(object):
     def __init__(self, x, y, z):
-        #assert type(x) == gfp_2 and type(y) == gfp_2 and type(z) == gfp_2
+        assert type(x) == gfp_2 and type(y) == gfp_2 and type(z) == gfp_2
         self.x = x
         self.y = y
         self.z = z
