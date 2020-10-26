@@ -1,23 +1,27 @@
 #!/usr/bin/python3
+from typing import Callable, List, Tuple
+
 from crypto.bn256 import *
 from genkey import KeyGen
 # Antoine
 import hashlib
 
+xor: Callable[[bytes, bytes], bytearray] = lambda part1, part2: bytearray([e1 ^ e2 for (e1, e2) in zip(part1, part2)])
 
-def hash_G2_to_M(g:str, length=64) -> bytes:
+
+def hash_G2_to_M(g: str, length=64) -> bytes:
     """Takes an element of G2, and hashes it to a bytes object"""
-    g_bytes:bytes = g.encode()
-    g_hash:bytes = hashlib.sha3_512(g_bytes).digest()
-    result:bytes = g_hash
+    g_bytes: bytes = g.encode()
+    g_hash: bytes = hashlib.sha3_512(g_bytes).digest()
+    result: bytes = g_hash
     # TODO: find a way to generate a hash of length equal to the given length
     while len(result) < length:
         result += g_hash
-    result:bytes = result[:length]
+    result: bytes = result[:length]
     return result
 
 
-def mPECK(pk_list, W, genkey: KeyGen, message=""):
+def mpeck(pk_list:List[CurvePoint], W:List[str], genkey: KeyGen, message:str="")-> Tuple[CurvePoint, bytearray, List[CurvePoint], List[CurvePoint]]:
     """
     multi Public key Encryption with Conjuctive Keyword. Encrypts both message and keywords !
     Performs the encryption of the keywords and of the message, using the mPECK model. Encrypts the keywords in W using the public keys in pk_list
@@ -40,16 +44,16 @@ def mPECK(pk_list, W, genkey: KeyGen, message=""):
     s: int = rand_elem()
     r: int = rand_elem()
     # computes the A=g^r
-    A = g1_scalar_base_mult(r)
+    A:CurvePoint = g1_scalar_base_mult(r)
     # computes B = pk**s for each public key
     n = len(pk_list)
-    B = []
+    B :List[CurvePoint]= []
     for j in range(n):
         yj: CurvePoint = genkey.pub_keys[j]
         B.append(yj.scalar_mul(s))
     # computes C = (h^r)(f^s) for each keyword
     l = len(W)
-    C = []
+    C: List[CurvePoint]= []
     for i, kw in enumerate(W):
         h = genkey.h1(kw)
         f = genkey.h2(kw)
@@ -57,29 +61,28 @@ def mPECK(pk_list, W, genkey: KeyGen, message=""):
         temp1: CurvePoint = h.scalar_mul(r)
         temp2: CurvePoint = f.scalar_mul(s)
         C.append(temp1.add(temp2))
-
     # encode the message
-    E = b""
-    xor = lambda part1, part2: bytearray([e1 ^ e2 for (e1, e2) in zip(part1, part2)])
+    E: bytearray = bytearray()
     if len(message) > 0:
         # TODO: to remove if hashes accept strings
         # if not isinstance(message, bytes):
         #     message = message.encode("utf-8")
-        e_g_g:gfp_12=genkey.e(twist_G, genkey.g)
-        e_r_s=r * s
-        e_g_g1:gfp_12=e_g_g.exp(e_r_s)
-        e_g_g2:bytes=hash_G2_to_M(e_g_g1.__repr__())
-        E = xor(e_g_g2, message.encode())
+        e_g_g: gfp_12 = genkey.e(twist_G, genkey.g)
+        e_r_s = r * s
+        e_g_g1: gfp_12 = e_g_g.exp(e_r_s)
+        e_g_g2: bytes = hash_G2_to_M(e_g_g1.__repr__())
+        E: bytearray = xor(e_g_g2, message.encode())
         print(E)
     # FIXME: e n'est pas de la bonne forme, elle ne peut pas prendre (g,g) comme argument donc impossible de faire le chiffrement du message
 
-    return [E, A, B, C]
+    return E, A, B, C
 
 
-def mDEC(xj, E, Bj, A, k):
+def mDEC(xj: int, E: bytearray, Bj:CurvePoint, A:CurvePoint, k:KeyGen):
     """Decrypts the cipher E, using private key xj, Bj and A"""
-    Xj = hash_G2_to_M(k.e(A, Bj) ** (1 / xj))
-    m = E ^ Xj
+    e_A_Bj: gfp_12 = k.e(CurveTwist(A.x,A.y,A.z), Bj)
+    Xj = hash_G2_to_M(e_A_Bj.mul_scalar(1 / xj))
+    m = xor(E, Xj)
     m = m.decode()
     return m
 
@@ -94,7 +97,7 @@ if __name__ == "__main__":
     # there are 3 clients, only allow 0 and 1 to search and decrypt
     recipients = [0, 1]
     recipients_pk = [k.pub_keys[r] for r in recipients]
-    E, A, B, C = mPECK(recipients_pk, keywords, k, message=message)
+    E, A, B, C = mpeck(recipients_pk, keywords, k, message=message)
     print(f"Message \"{message}\" encrypted, only recipients {recipients} are allowed to decrypt")
     # decrypt as 0
     for i in range(n):
