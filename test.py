@@ -9,7 +9,7 @@ import trapdoor
 # Lucas
 
 
-def Test(priv_key: Element, _A: Element, _B: List[Element], _C: List[Element], T: List[Union[int, Element]], j: int, genkey: KeyGen):
+def Test(pub_key: Element, _A: Element, _B: List[Element], _C: List[Element], T: List[Union[int, Element]], j: int, genkey: KeyGen):
     #  S = [A, B, C]
 
     A = _A  # g^r
@@ -21,10 +21,12 @@ def Test(priv_key: Element, _A: Element, _B: List[Element], _C: List[Element], T
     keywords_product: Element = Element.one(genkey.pairing, G1)
     for i in I:
         keywords_product *= C[i]
-    E1: Element = genkey.pairing.apply(T[0], keywords_product)
-    G3: Element = genkey.pairing.apply(A, T[1])
-    G2: Element = genkey.pairing.apply(B[j], T[2])
+    E1: Element = genkey.e(T[0], keywords_product)
+    G3: Element = genkey.e(A, T[1])
+    G2: Element = genkey.e(B[j], T[2])
     E2: Element = G3 * G2
+    print(E1)
+    print(E2)
     # Test verification
     if E1 == E2:
         return 1  # keywords match
@@ -50,8 +52,7 @@ if __name__ == "__main__":
 
     _E, _A, _B, _C = mpeck(_recipients_pk, _keywords, k, message=_message)
 
-    chosen_priv_key = k.priv_keys[0]
     # trapdoor generation (query from user j)
-    T = trapdoor.generate_trapdoor(chosen_priv_key, [1], ["encryption"], k)
+    T = trapdoor.generate_trapdoor(k.priv_keys[0], [0], ["test"], k)
     # Test
-    print(Test(chosen_priv_key, _A, _B, _C, T, 1, k))
+    print(Test(k.pub_keys[0], _A, _B, _C, T, 1, k))
