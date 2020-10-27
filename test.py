@@ -2,7 +2,7 @@
 from petrelic.bn import Bn
 
 from genkey import *
-from mpeck import mpeck
+from mpeck import mpeck, mdec
 import trapdoor
 
 
@@ -51,8 +51,12 @@ if __name__ == "__main__":
     _recipients_pk = [k.pub_keys[r] for r in _recipients]
 
     _E, _A, _B, _C = mpeck(_recipients_pk, _keywords, k, message=_message)
-
+    for _i in range(len(_recipients)):
+        m = mdec(k.priv_keys[_i], _E, _B[_i], _A, k)
+        print(f"Client {_i}: decryption is: {m}")
+    user=0
+    keyword_index=0
     # trapdoor generation (query from user j)
-    T = trapdoor.generate_trapdoor(k.priv_keys[0], [0], ["test"], k)
+    T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k)
     # Test
-    print(Test(k.pub_keys[0], _A, _B, _C, T, 1, k))
+    print(Test(k.pub_keys[user], _A, _B, _C, T, 0, k))

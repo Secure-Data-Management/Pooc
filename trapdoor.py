@@ -11,7 +11,7 @@ def random_in_zp():
     return rand
 
 
-def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen)->List[Union[Element,int]]:
+def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen) -> List[Union[Element, int]]:
     """
 
     :param genkey:
@@ -44,5 +44,5 @@ def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: Li
 
 if __name__ == "__main__":
     k = KeyGen(3)
-    Tjq = generate_trapdoor(k.priv_keys[0],[1],["encryption"],k)
+    Tjq = generate_trapdoor(k.priv_keys[0], [1], ["encryption"], k)
     print(Tjq)
