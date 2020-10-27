@@ -58,7 +58,6 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
     for i, kw in enumerate(keyword_list):
         h = genkey.h1(kw)
         f = genkey.h2(kw)
-        # ** -> * ; * -> +
         temp1: Element = h ** r
         temp2: Element = f ** s
         C.append(temp1 * temp2)
@@ -70,8 +69,6 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
         e_g_g1: Element = e_g_g ** e_r_s
         e_g_g2: bytes = hashlib.sha256(e_g_g1.__str__().encode()).digest()
         E: bytearray = xor(message.encode(), e_g_g2)
-        print(E)
-
     return E, A, B, C
 
 

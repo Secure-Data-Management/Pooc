@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
 # Irene
-from petrelic.bn import Bn
-from petrelic.multiplicative.pairing import GT, G1, G2
-from genkey import KeyGen
+
+from genkey import *
 
 
 # Hash functions as defined by KeyGen
@@ -12,32 +11,38 @@ def random_in_zp():
     return rand
 
 
-def generate_trapdoor(skj, Q, m, params):
-    liste_I = Q[0:m] # list of indexes to denote the location of wIj
-    liste_w = Q[m:]  # list of keywords for the cunjunctive search
+def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen)->List[Union[Element,int]]:
+    """
+
+    :param genkey:
+    :param priv_key:
+    :param index_list: list of indexes to denote the location of wIj
+    :param keyword_list: list of keywords for the cunjunctive search
+    :param params:
+    :return:
+    """
 
     # select a random value t in Zp*
-    t = random_in_zp()
+    t: Element = Element.random(genkey.pairing, Zr)
 
     # Tjq1 = g ** t ; g the generator of G1 as defined in KeyGen
-    g = params['g']
-    Tjq1 = g ** t
+    Tjq1 = genkey.g ** t
 
     # Tjq2 = (hI1... hIm)**t where hIj = h1(wIj)
-    Tjq2 = G1.neutral_element()
-    for element in liste_w:
-        Tjq2 = Tjq2 * (params['H1'](element) ** t)
-
+    Tjq2: Element = Element.one(genkey.pairing, G1)
+    for keyword in keyword_list:
+        Tjq2 = Tjq2 * genkey.h1(keyword)
+    Tjq2 **= t
     # Tjq3 = (fI1... fIm)**(t / xj) where fIj = h2(wIj) ; xj computed in KeyGen
-    Tjq3 = G1.neutral_element()
-    for element in liste_w:
-        Tjq3 = Tjq3 * (params['H2'](element) ** (t.int_div(skj)))
+    Tjq3: Element = Element.one(genkey.pairing, G1)
+    for keyword in keyword_list:
+        Tjq3 = Tjq3 * genkey.h2(keyword)
+    Tjq3 **= t.__ifloordiv__(priv_key)
 
-    Tjq = [Tjq1, Tjq2, Tjq3] + liste_I
-    return Tjq
+    return [Tjq1, Tjq2, Tjq3] + index_list
 
 
 if __name__ == "__main__":
     k = KeyGen(3)
-    params = {"G1":G1, "G2":G2, "e":k.e, "H1":k.h1, "H2":k.h2, "g":k.g1}
-    Tjq = generate_trapdoor()
+    Tjq = generate_trapdoor(k.priv_keys[0],[1],["encryption"],k)
+    print(Tjq)

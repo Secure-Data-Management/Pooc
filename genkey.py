@@ -35,15 +35,15 @@ class KeyGen:
         self.priv_keys: List[Element] = []
         self.g = Element.random(self.pairing, G2)
         for _ in range(n):
-            sk:Element = Element.random(self.pairing, Zr)
-            pk:Element = Element(self.pairing, G2, value=self.g ** sk)
+            sk: Element = Element.random(self.pairing, Zr)
+            pk: Element = Element(self.pairing, G2, value=self.g ** sk)
             self.keys.append((sk, pk))
             self.pub_keys.append(pk)
             self.priv_keys.append(sk)
 
     def get_hash_function(self, pairing, hash_function: Callable[[Union[bytes, bytearray]], Any]) -> Callable[[Union[bytes, bytearray, str]], Element]:
-        return lambda text: Element.from_hash(pairing, G1, hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else Element.from_hash(pairing, G1,
-                                                                                                                                                        hash_function(text.encode()).digest())
+        return lambda text: Element.from_hash(pairing, G1, hash_function(text).digest()) if isinstance(text, (bytes, bytearray)) else \
+            Element.from_hash(pairing, G1, hash_function(text.encode()).digest())
 
     @staticmethod
     def test():
