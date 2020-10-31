@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-from petrelic.bn import Bn
-
 from genkey import *
 from mpeck import mpeck, mdec
 import trapdoor
