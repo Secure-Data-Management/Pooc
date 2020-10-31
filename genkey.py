@@ -27,10 +27,10 @@ class KeyGen:
         self.pub_keys: List[Element] = []
         self.keys: List[Tuple[Element, Element]] = []
         self.priv_keys: List[Element] = []
-        self.g = Element.random(self.pairing, G2)
+        self.g = Element.random(self.pairing, G1)
         for _ in range(n):
             sk: Element = Element.random(self.pairing, Zr)
-            pk: Element = Element(self.pairing, G2, value=self.g ** sk)
+            pk: Element = Element(self.pairing, G1, value=self.g ** sk)
             self.keys.append((sk, pk))
             self.pub_keys.append(pk)
             self.priv_keys.append(sk)
