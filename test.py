@@ -52,8 +52,8 @@ if __name__ == "__main__":
     for _i in range(len(_recipients)):
         m = mdec(k.priv_keys[_i], _E, _B[_i], _A, k)
         print(f"Client {_i}: decryption is: {m}")
-    user=0
-    keyword_index=0
+    user = 0
+    keyword_index = 0
     # trapdoor generation (query from user j)
     T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k)
     # Test

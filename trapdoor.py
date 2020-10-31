@@ -4,13 +4,6 @@
 
 from genkey import *
 
-
-# Hash functions as defined by KeyGen
-def random_in_zp():
-    rand = GT.order().random()
-    return rand
-
-
 def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen) -> List[Union[Element, int]]:
     """
 
