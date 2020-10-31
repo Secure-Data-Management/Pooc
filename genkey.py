@@ -18,13 +18,7 @@ from pypbc import *
 
 
 class KeyGen:
-    """ we are using RELIC as the underlying curve gen ( BLS-381 ) we will implement full parameter through charm like later
-     when the dependency hell has been fixed read more here: https://petrelic.readthedocs.io/en/latest/petrelic.native.html """
-
     def __init__(self, n: int):
-        # those are the hash function which hash to a G1Element using sha3 256 and 512
-
-        # this is the element e (not sure tho)
         self.params: Parameters = Parameters(qbits=512, rbits=160)
         self.pairing: Pairing = Pairing(self.params)
         self.h1: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_256)
