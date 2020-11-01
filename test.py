@@ -4,18 +4,11 @@ from mpeck import mpeck, mdec
 import trapdoor
 
 
-# Lucas
-
-
-def Test(pub_key: Element, _A: Element, _B: List[Element], _C: List[Element], T: List[Union[int, Element]], j: int, genkey: KeyGen):
-    #  S = [A, B, C]
-
-    A = _A  # g^r
-    B = _B  # pk^s
-    C = _C  # l total crypted keywords (h^r)(f^s)
-    I: List[int] = T[3:]  # m indexes of keywords from the query
-
-    # Intermediate computation
+def Test(_A: Element, _B: List[Element], _C: List[Element], T: List[Union[int, Element]], j: int, genkey: KeyGen):
+    A = _A
+    B = _B
+    C = _C
+    I: List[int] = T[3:]
     keywords_product: Element = Element.one(genkey.pairing, G1)
     for i in I:
         keywords_product *= C[i]
@@ -25,11 +18,10 @@ def Test(pub_key: Element, _A: Element, _B: List[Element], _C: List[Element], T:
     E2: Element = G3 * G2
     print(E1)
     print(E2)
-    # Test verification
     if E1 == E2:
-        return 1  # keywords match
+        return 1
     else:
-        return 0  # keywords don't match
+        return 0
 
 
 if __name__ == "__main__":
@@ -37,10 +29,8 @@ if __name__ == "__main__":
     n = 3
     # number of keywords
     l = 2
-
     # Keys generation
     k: KeyGen = KeyGen(n)
-
     # mPeck
     _message = "This is the message"
     _keywords = ["test", "encryption"]
@@ -57,4 +47,4 @@ if __name__ == "__main__":
     # trapdoor generation (query from user j)
     T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k)
     # Test
-    print(Test(k.pub_keys[user], _A, _B, _C, T, 0, k))
+    print(Test(_A, _B, _C, T, 0, k))

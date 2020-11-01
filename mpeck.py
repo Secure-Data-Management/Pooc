@@ -1,14 +1,10 @@
 #!/usr/bin/python3
 from typing import Callable, List, Tuple
-
-from crypto.bn256 import *
 from genkey import *
-# Antoine
 import hashlib
 
 
 def xor(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> bytearray:
-    """Takes a string message and a bytes sequence and hash it with a displacing key sequence"""
     res: bytearray = bytearray()
     if type(message) == str:
         message = bytearray(message.encode())
@@ -26,33 +22,14 @@ def xor(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> 
 
 
 def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, message: str = "") -> Tuple[bytearray, Element, List[Element], List[Element]]:
-    """
-    multi Public key Encryption with Conjuctive Keyword. Encrypts both message and keywords !
-    Performs the encryption of the keywords and of the message, using the mPECK model. Encrypts the keywords in W using the public keys in pk_list
-    Parameters:
-        pk: list of keys (from Keygen.keys)
-        keyword_list: set of keywords
-        params: a dictionary containing the security parameters
-    Returns:
-        [E, A, B, C] as in the paper, E=b"" if there was no message
-            [A, B, C] with A=g^r, B=[B1, ..., Bn] and C=[C1, ..., Cl]
-            :param keyword_list:
-            :param pk_list:
-            :param message:
-            :param genkey:
-    """
-    # selects two random values in Zp*
     s: Element = Element.random(genkey.pairing, Zr)
     r: Element = Element.random(genkey.pairing, Zr)
-    # computes the A=g^r
     A: Element = genkey.g ** r
-    # computes B = pk**s for each public key
     n = len(pk_list)
     B: List[Element] = []
     for j in range(n):
         yj: Element = genkey.pub_keys[j]
         B.append(yj ** s)
-    # computes C = (h^r)(f^s) for each keyword
     C: List[Element] = []
     for i, kw in enumerate(keyword_list):
         h = genkey.h1(kw)
@@ -60,7 +37,6 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
         temp1: Element = h ** r
         temp2: Element = f ** s
         C.append(temp1 * temp2)
-    # encode the message
     E: bytearray = bytearray()
     if len(message) > 0:
         e_g_g: Element = genkey.pairing.apply(genkey.g, genkey.g)
@@ -72,7 +48,6 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
 
 
 def mdec(xj: Element, E: bytearray, Bj: Element, A: Element, k: KeyGen):
-    """Decrypts the cipher E, using private key xj, Bj and A"""
     e_A_Bj: Element = k.e(A, Bj)
     res: Element = e_A_Bj ** (~xj)
     Xj = hashlib.sha256(res.__str__().encode()).digest()
