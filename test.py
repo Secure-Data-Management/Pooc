@@ -1,7 +1,7 @@
 #!/usr/bin/python3
+import trapdoor
 from genkey import *
 from mpeck import mpeck, mdec
-import trapdoor
 
 
 def Test(_A: Element, _B: List[Element], _C: List[Element], T: List[Union[int, Element]], j: int, genkey: KeyGen):

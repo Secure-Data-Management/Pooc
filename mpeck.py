@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-from typing import Callable, List, Tuple
-from genkey import *
 import hashlib
+
+from genkey import *
 
 
 def xor(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> bytearray:

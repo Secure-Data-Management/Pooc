@@ -30,5 +30,4 @@ class KeyGen:
 
 
 if __name__ == '__main__':
-    KeyGen.test()
     print(KeyGen(3))
