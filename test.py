@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import genkey
 from genkey import *
 from mpeck import mpeck, mdec
 import trapdoor
@@ -57,7 +58,8 @@ if __name__ == "__main__":
         print(f"Client {_r}: decryption is: {m}")
     user = 1
     keyword_index = 0
+    t: Element = Element(k.pairing, Zr,value=0x7424D84332FA1367EB82D66D6829E8D651AF2F58)
     # trapdoor generation (query from user j)
-    T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k)
+    T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k,t)
     # Test
     print(Test(k.pub_keys[user], _A, _B, _C, T, 0, k))
