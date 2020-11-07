@@ -50,11 +50,11 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
     n = len(pk_list)
     B: List[Element] = []
     for j in range(n):
-        yj: Element = genkey.pub_keys[j]
+        yj: Element = pk_list[j]
         B.append(yj ** s)
     # computes C = (h^r)(f^s) for each keyword
     C: List[Element] = []
-    for i, kw in enumerate(keyword_list):
+    for _, kw in enumerate(keyword_list):
         h = genkey.h1(kw)
         f = genkey.h2(kw)
         temp1: Element = h ** r

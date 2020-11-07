@@ -45,14 +45,14 @@ if __name__ == "__main__":
     _message = "This is the message"
     _keywords = ["test", "encryption"]
     # there are 3 clients, only allow 0 and 1 to search and decrypt
-    _recipients = [0, 1]
+    _recipients = [1, 2]
     _recipients_pk = [k.pub_keys[r] for r in _recipients]
 
     _E, _A, _B, _C = mpeck(_recipients_pk, _keywords, k, message=_message)
-    for _i in range(len(_recipients)):
-        m = mdec(k.priv_keys[_i], _E, _B[_i], _A, k)
-        print(f"Client {_i}: decryption is: {m}")
-    user = 0
+    for _i, _r in enumerate(_recipients):
+        m = mdec(k.priv_keys[_r], _E, _B[_i], _A, k)
+        print(f"Client {_r}: decryption is: {m}")
+    user = 1
     keyword_index = 0
     # trapdoor generation (query from user j)
     T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k)
