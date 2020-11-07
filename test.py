@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     # Keys generation
     params = "type a q 5190226450145940880746663486308966347220639714045250223182499121249068575513554544422970314418344770379996438351407014419358038003225732626831022128438331 h 7102594095788614028758769623913839942835962504311385389572759256033849452424444030966227463924769974838212 r 730750818665452757176057050065048642452048576511 exp2 159 exp1 110 sign1 1 sign0 -1 "
-    k: KeyGen = KeyGen(n, params)
+    k: KeyGen = KeyGen(n, params,"032F098B7A139CD885793702C3D8A03859A2B6D35643C9D3971DA924CD7CD65AE7E8FE9AC1B5A287B825E1B960D2F7005DD5E6D86DD9AB96608AE6E8F790471A88")
 
     # mPeck
     _message = "This is the message"
@@ -58,8 +58,8 @@ if __name__ == "__main__":
         print(f"Client {_r}: decryption is: {m}")
     user = 1
     keyword_index = 0
-    t: Element = Element(k.pairing, Zr,value=0x7424D84332FA1367EB82D66D6829E8D651AF2F58)
+    t: Element = Element(k.pairing, Zr, value=0x7424D84332FA1367EB82D66D6829E8D651AF2F58)
     # trapdoor generation (query from user j)
-    T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k,t)
+    T = trapdoor.generate_trapdoor(k.priv_keys[user], [keyword_index], [_keywords[keyword_index]], k, t)
     # Test
     print(Test(k.pub_keys[user], _A, _B, _C, T, 0, k))

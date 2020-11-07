@@ -18,7 +18,7 @@ from pypbc import *
 
 
 class KeyGen:
-    def __init__(self, n: int, params_string):
+    def __init__(self, n: int, params_string, g: str):
         self.params: Parameters = Parameters(params_string)
         self.pairing: Pairing = Pairing(self.params)
         self.h1: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_256)
@@ -27,7 +27,8 @@ class KeyGen:
         self.pub_keys: List[Element] = []
         self.keys: List[Tuple[Element, Element]] = []
         self.priv_keys: List[Element] = []
-        self.g = Element.random(self.pairing, G1)
+        print(Element.random(self.pairing,G1))
+        self.g: Element = Element(self.pairing, G1, value=g)
         for _ in range(n):
             sk: Element = Element.random(self.pairing, Zr)
             pk: Element = Element(self.pairing, G1, value=self.g ** sk)

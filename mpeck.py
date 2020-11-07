@@ -44,6 +44,7 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, rando
     # selects two random values in Zp*
     s = Element(genkey.pairing, Zr, value=random_s)
     r = Element(genkey.pairing, Zr, value=random_r)
+    print(s,r)
     # s: Element = Element.random(genkey.pairing, Zr)
     # r: Element = Element.random(genkey.pairing, Zr)
     # computes the A=g^r
