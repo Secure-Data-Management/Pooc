@@ -18,8 +18,8 @@ from pypbc import *
 
 
 class KeyGen:
-    def __init__(self, n: int):
-        self.params: Parameters = Parameters(qbits=512, rbits=160)
+    def __init__(self, n: int, params_string):
+        self.params: Parameters = Parameters(params_string)
         self.pairing: Pairing = Pairing(self.params)
         self.h1: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_256)
         self.h2: Callable[[Union[bytes, bytearray, str]], Element] = self.get_hash_function(self.pairing, hashlib.sha3_512)

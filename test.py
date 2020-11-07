@@ -39,7 +39,8 @@ if __name__ == "__main__":
     l = 2
 
     # Keys generation
-    k: KeyGen = KeyGen(n)
+    params = "type a q 5190226450145940880746663486308966347220639714045250223182499121249068575513554544422970314418344770379996438351407014419358038003225732626831022128438331 h 7102594095788614028758769623913839942835962504311385389572759256033849452424444030966227463924769974838212 r 730750818665452757176057050065048642452048576511 exp2 159 exp1 110 sign1 1 sign0 -1 "
+    k: KeyGen = KeyGen(n, params)
 
     # mPeck
     _message = "This is the message"
@@ -48,7 +49,9 @@ if __name__ == "__main__":
     _recipients = [1, 2]
     _recipients_pk = [k.pub_keys[r] for r in _recipients]
 
-    _E, _A, _B, _C = mpeck(_recipients_pk, _keywords, k, message=_message)
+    int_s = 0x1CF57D847CE6B7F5565B8E578A954513877DCAD0
+    int_r = 0x61D70D8B9F955B27A593E7E6E2FDCB718BD2088F
+    _E, _A, _B, _C = mpeck(_recipients_pk, _keywords, k, random_r=int_r, random_s=int_s, message=_message)
     for _i, _r in enumerate(_recipients):
         m = mdec(k.priv_keys[_r], _E, _B[_i], _A, k)
         print(f"Client {_r}: decryption is: {m}")

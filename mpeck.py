@@ -25,7 +25,7 @@ def xor(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> 
     return res
 
 
-def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, message: str = "") -> Tuple[bytearray, Element, List[Element], List[Element]]:
+def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, random_s, random_r, message: str = "") -> Tuple[bytearray, Element, List[Element], List[Element]]:
     """
     multi Public key Encryption with Conjuctive Keyword. Encrypts both message and keywords !
     Performs the encryption of the keywords and of the message, using the mPECK model. Encrypts the keywords in W using the public keys in pk_list
@@ -42,8 +42,10 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
             :param genkey:
     """
     # selects two random values in Zp*
-    s: Element = Element.random(genkey.pairing, Zr)
-    r: Element = Element.random(genkey.pairing, Zr)
+    s = Element(genkey.pairing, Zr, value=random_s)
+    r = Element(genkey.pairing, Zr, value=random_r)
+    # s: Element = Element.random(genkey.pairing, Zr)
+    # r: Element = Element.random(genkey.pairing, Zr)
     # computes the A=g^r
     A: Element = genkey.g ** r
     # computes B = pk**s for each public key

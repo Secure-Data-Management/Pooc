@@ -4,7 +4,7 @@
 
 from genkey import *
 
-def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen) -> List[Union[Element, int]]:
+def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: List[str], genkey: KeyGen, el_t) -> List[Union[Element, int]]:
     """
 
     :param genkey:
@@ -16,7 +16,8 @@ def generate_trapdoor(priv_key: Element, index_list: List[int], keyword_list: Li
     """
 
     # select a random value t in Zp*
-    t: Element = Element.random(genkey.pairing, Zr)
+    # t: Element = Element.random(genkey.pairing, Zr)
+    t = el_t
 
     # Tjq1 = g ** t ; g the generator of G1 as defined in KeyGen
     Tjq1 = genkey.g ** t
