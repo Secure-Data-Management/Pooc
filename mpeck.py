@@ -1,7 +1,29 @@
 #!/usr/bin/python3
+import base64
 import hashlib
+import json
+from typing import Optional
+
+from Crypto.Cipher import AES
 
 from genkey import *
+
+
+def encrypt(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> Tuple[bytes, bytes, bytes]:
+    cipher = AES.new(key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(message)
+    return ciphertext, tag, cipher.nonce
+
+
+def decrypt(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes], tag: Union[bytearray, bytes], nonce: Union[bytearray, bytes]) -> Tuple[bytes, bool]:
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
+    plaintext: bytes = cipher.decrypt(message)
+    try:
+        cipher.verify(tag)
+        res = True
+    except ValueError:
+        res = False
+    return plaintext, res
 
 
 def xor(message: Union[bytearray, bytes, str], key: Union[bytearray, bytes]) -> bytearray:
@@ -43,17 +65,22 @@ def mpeck(pk_list: List[Element], keyword_list: List[str], genkey: KeyGen, messa
         e_r_s: Element = r * s
         e_g_g1: Element = e_g_g ** e_r_s
         e_g_g2: bytes = hashlib.sha256(e_g_g1.__str__().encode()).digest()
-        E: bytearray = xor(message.encode(), e_g_g2)
+        ciphertext, tag, nonce = encrypt(message.encode(), e_g_g2)
+        E: bytearray = bytearray(json.dumps({
+            "ciphertext": base64.b64encode(ciphertext).decode(),
+            "tag": base64.b64encode(tag).decode(),
+            "nonce": base64.b64encode(nonce).decode(),
+        }).encode())
     return E, A, B, C
 
 
-def mdec(xj: Element, E: bytearray, Bj: Element, A: Element, k: KeyGen):
+def mdec(xj: Element, E: bytearray, Bj: Element, A: Element, k: KeyGen) -> Optional[str]:
     e_A_Bj: Element = k.e(A, Bj)
     res: Element = e_A_Bj ** (~xj)
     Xj = hashlib.sha256(res.__str__().encode()).digest()
-    m = xor(E, Xj)
-    m = m.decode()
-    return m
+    j = json.loads(E.decode())
+    plaintext, verify = decrypt(base64.b64decode(j["ciphertext"]), Xj, base64.b64decode(j["tag"]), base64.b64decode(j["nonce"]))
+    return plaintext.decode() if verify else None
 
 
 if __name__ == "__main__":

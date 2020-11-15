@@ -12,3 +12,4 @@ pypbc
 # cd pypbc
 # edit pypbc.h (add #define PY_SSIZE_T_CLEAN at the top)
 # sudo pip3 install .
+pycryptodome==3.9.9
